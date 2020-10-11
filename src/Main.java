@@ -142,7 +142,7 @@ class Main {
 				return Evaluate();
 			int selectedScore = depth % 2 == 0 ? Integer.MIN_VALUE : Integer.MAX_VALUE;
 			for (int i = 0; i < SIZE; i++) {
-				boolean breakFlag=false;
+				boolean breakFlag = false;
 				for (int j = 0; j < SIZE; j++) {
 					if (getValueAt(i, j) != EMPTY)
 						continue;
@@ -173,23 +173,24 @@ class Main {
 						placeAt(i, j, EMPTY);
 						// alpha-betaºÙ÷¶
 						if (depth % 2 == 0) {
-							if(selectedScore>cutValue) { // betaºÙ÷¶
-								breakFlag=true;
+							if (selectedScore > cutValue) { // betaºÙ÷¶
+								breakFlag = true;
 								break;
 							}
-						} else { 
-							if(selectedScore<cutValue) { // alphaºÙ÷¶
-								breakFlag=true;
+						} else {
+							if (selectedScore < cutValue) { // alphaºÙ÷¶
+								breakFlag = true;
 								break;
 							}
 						}
 					}
 				}
-				if(breakFlag)break;
+				if (breakFlag)
+					break;
 			}
 			return selectedScore;
 		}
-
+		
 		public Map<String, Integer> ChoosePosition() { // —°‘ÒŒª÷√
 			Position move = new Position();
 			DFS(0, move, Integer.MAX_VALUE);
