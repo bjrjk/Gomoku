@@ -138,7 +138,7 @@ class Main2 {
 			for (int line = 0; line < SIZE; line++) {
 				XList.clear();
 				YList.clear();
-				for (int x = line, y = SIZE - 1; x >= 0 && y < SIZE; x--, y++) {
+				for (int x = line, y = SIZE - 1; x < SIZE && y >= 0; x++, y--) {
 					XList.add(x);
 					YList.add(y);
 				}
@@ -149,7 +149,7 @@ class Main2 {
 			for (int row = 0; row < SIZE - 1; row++) {
 				XList.clear();
 				YList.clear();
-				for (int x = 0, y = row; x >= 0 && y < SIZE; x--, y++) {
+				for (int x = 0, y = row; x < SIZE && y >= 0; x++, y--) {
 					XList.add(x);
 					YList.add(y);
 				}
@@ -182,7 +182,7 @@ class Main2 {
 			sum += SequenceEvaluate(XList, YList);
 
 			// 评估右上-左下对角线
-			for (int i = x - 5, j = y + 5; i >= x + 5 && j <= y - 5; i--, j++) {
+			for (int i = x - 5, j = y + 5; i <= x + 5 && j >= y - 5; i++, j--) {
 				XList.add(i);
 				YList.add(j);
 			}

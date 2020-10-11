@@ -1,7 +1,7 @@
 import java.util.*;
 import org.json.simple.JSONValue;
 
-class Main {
+class Main3 {
 	public static final int EMPTY = 0;
 	public static final int BOT = 1;
 	public static final int PLAYER = 2;
@@ -9,6 +9,29 @@ class Main {
 
 	static class Position {
 		public int x, y;
+	}
+
+	static class PositionNode {
+		public int x, y, priority;
+
+		public PositionNode(int x, int y, int priority) {
+			this.x = x;
+			this.y = y;
+			this.priority = priority;
+		}
+
+		public static Comparator<PositionNode> cmpGreater = new Comparator<PositionNode>() {
+			@Override
+			public int compare(PositionNode o1, PositionNode o2) {
+				return o2.priority - o1.priority;
+			}
+		};
+		public static Comparator<PositionNode> cmpLess = new Comparator<PositionNode>() {
+			@Override
+			public int compare(PositionNode o1, PositionNode o2) {
+				return o1.priority - o2.priority;
+			}
+		};
 	}
 
 	static class Grid {
@@ -32,13 +55,13 @@ class Main {
 		}
 
 		private int getScore(int status, int cnt) {
-			assert (0 <= cnt && cnt <= 5);
+			// assert (0 <= cnt && cnt <= 5);
 			assert (status == EMPTY || status == BOT || status == PLAYER);
 			switch (status) {
 			case BOT:
-				return Score[cnt];
+				return cnt > 5 ? Score[5] : Score[cnt];
 			case PLAYER:
-				return -Score[cnt];
+				return -(cnt > 5 ? Score[5] : Score[cnt]);
 			default:
 				return 0;
 			}
@@ -135,14 +158,56 @@ class Main {
 			return sum;
 		}
 
-		private int DFS(int depth, Position movePos, int cutValue) {
+		private int EvaluateUnit(int x, int y) {
+			int sum = 0;
+			ArrayList<Integer> XList = new ArrayList<Integer>();
+			ArrayList<Integer> YList = new ArrayList<Integer>();
+			// ÆÀ¹ÀÐÐ
+			for (int j = 0; j < SIZE; j++) {
+				XList.add(x);
+				YList.add(j);
+			}
+			sum += SequenceEvaluate(XList, YList);
+			// ÆÀ¹ÀÁÐ
+			for (int j = 0; j < SIZE; j++) {
+				XList.add(j);
+				YList.add(y);
+			}
+			sum += SequenceEvaluate(XList, YList);
+			// ÆÀ¹À×óÉÏ-ÓÒÏÂ¶Ô½ÇÏß
+			for (int i = x - Math.min(x, y), j = y - Math.min(x, y); i < SIZE && j < SIZE; i++, j++) {
+				XList.add(i);
+				YList.add(j);
+			}
+			sum += SequenceEvaluate(XList, YList);
+
+			// ÆÀ¹ÀÓÒÉÏ-×óÏÂ¶Ô½ÇÏß
+			for (int i = x - Math.min(x, SIZE - y), j = y + Math.min(x, SIZE - y); i < SIZE && j >= 0; i++, j--) {
+				XList.add(i);
+				YList.add(j);
+			}
+			sum += SequenceEvaluate(XList, YList);
+			return sum;
+		}
+
+		private int EvaluateUnitDiff(int depth, int x, int y) {
+			placeAt(x, y, EMPTY);
+			int sum1 = EvaluateUnit(x, y);
+			placeAt(x, y, depth % 2 == 0 ? BOT : PLAYER);
+			int sum2 = EvaluateUnit(x, y);
+			placeAt(x, y, EMPTY);
+			return sum2 - sum1;
+		}
+
+		private int DFS2(int depth, Position movePos, int cutValue, int evaluationValue) {
 			// ¼«´ó¼«Ð¡ËÑË÷, depth%2==0Ê±ÎªBOT,depth%2==1Ê±ÎªPLAYER
 			// alpha-beta ¼ôÖ¦, cutValue
 			if (depth == DEPTH)
-				return Evaluate();
+				return evaluationValue;
 			int selectedScore = depth % 2 == 0 ? Integer.MIN_VALUE : Integer.MAX_VALUE;
+			Queue<PositionNode> pq = new PriorityQueue<PositionNode>(
+					depth % 2 == 0 ? PositionNode.cmpGreater : PositionNode.cmpLess);
 			for (int i = 0; i < SIZE; i++) {
-				boolean breakFlag = false;
 				for (int j = 0; j < SIZE; j++) {
 					if (getValueAt(i, j) != EMPTY)
 						continue;
@@ -154,46 +219,48 @@ class Main {
 							break;
 						}
 					}
-					if (flag) {
-						placeAt(i, j, depth % 2 == 0 ? BOT : PLAYER);
-						int curScore = DFS(depth + 1, new Position(), selectedScore);
-						if (depth % 2 == 0) {
-							if (selectedScore < curScore) {
-								selectedScore = curScore;
-								movePos.x = i;
-								movePos.y = j;
-							}
-						} else {
-							if (selectedScore > curScore) {
-								selectedScore = curScore;
-								movePos.x = i;
-								movePos.y = j;
-							}
-						}
-						placeAt(i, j, EMPTY);
-						// alpha-beta¼ôÖ¦
-						if (depth % 2 == 0) {
-							if (selectedScore > cutValue) { // beta¼ôÖ¦
-								breakFlag = true;
-								break;
-							}
-						} else {
-							if (selectedScore < cutValue) { // alpha¼ôÖ¦
-								breakFlag = true;
-								break;
-							}
-						}
+					if (flag)
+						pq.add(new PositionNode(i, j, EvaluateUnitDiff(depth, i, j)));
+				}
+			}
+			int nodeCnt = 0;
+			while (!pq.isEmpty()) {
+				nodeCnt++;
+				if (nodeCnt > 100)
+					break;
+				PositionNode curPositionNode = pq.poll();
+				int i = curPositionNode.x, j = curPositionNode.y;
+				placeAt(i, j, depth % 2 == 0 ? BOT : PLAYER);
+				int curScore = DFS2(depth + 1, new Position(), selectedScore, evaluationValue+curPositionNode.priority);
+				if (depth % 2 == 0) {
+					if (selectedScore < curScore) {
+						selectedScore = curScore;
+						movePos.x = i;
+						movePos.y = j;
+					}
+				} else {
+					if (selectedScore > curScore) {
+						selectedScore = curScore;
+						movePos.x = i;
+						movePos.y = j;
 					}
 				}
-				if (breakFlag)
-					break;
+				placeAt(i, j, EMPTY);
+				// alpha-beta¼ôÖ¦
+				if (depth % 2 == 0) {
+					if (selectedScore > cutValue) // beta¼ôÖ¦
+						break;
+				} else {
+					if (selectedScore < cutValue) // alpha¼ôÖ¦
+						break;
+				}
 			}
 			return selectedScore;
 		}
-		
+
 		public Map<String, Integer> ChoosePosition() { // Ñ¡ÔñÎ»ÖÃ
 			Position move = new Position();
-			DFS(0, move, Integer.MAX_VALUE);
+			DFS2(0, move, Integer.MAX_VALUE,0);
 			Map<String, Integer> map = new HashMap<String, Integer>();
 			map.put("x", move.x);
 			map.put("y", move.y);
