@@ -63,7 +63,7 @@ class Main4 {
 
 		private long getScore(int status, int cnt, int edgeSituation) {
 			// assert (0 <= cnt && cnt <= 5);
-			assert (status == EMPTY || status == BOT || status == PLAYER);
+			// assert (status == EMPTY || status == BOT || status == PLAYER);
 			if (edgeSituation == 0)
 				return 0;
 			else if (edgeSituation == 1) {
