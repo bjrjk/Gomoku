@@ -1,6 +1,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <cstring>
 #include <cstdlib>
 #include <algorithm>
 #include <queue>
@@ -14,8 +15,8 @@ const int PLAYER = 2;
 const int NOT_EXIST = -1;
 
 const int SIZE = 15;
-const int DEPTH = 4;
-const int SCORE_LENGTH = 9;
+int DEPTH;
+const int SCORE_LENGTH = 6;
 const int SHIFT_LENGTH = 8;
 
 struct Position {
@@ -43,12 +44,12 @@ struct Grid {
 	int grid[SIZE][SIZE];
 	int XShift[SHIFT_LENGTH] = { -1, -1, -1, 0, 0, 1, 1, 1 };
 	int YShift[SHIFT_LENGTH] = { -1, 0, 1, -1, 1, -1, 0, 1 };
-	long long Score_E1[SCORE_LENGTH] = { 0, 2, 40, 500, 8000, 95000, 800000, 8000000, 80000000 };
-	long long Score_E2[SCORE_LENGTH] = { 0, 10, 100, 1000, 10000, 100000, 1000000, 10000000, 100000000 };
+	long long Score_E1[SCORE_LENGTH] = { 0, 1, 5, 25, 1250, 100000 };
+	long long Score_E2[SCORE_LENGTH] = { 0, 5, 20, 200, 1500, 100000 };
 	int XList[50];
 	int YList[50];
 
-	bool placeAt(int x, int y, int value) {
+	inline bool placeAt(int x, int y, int value) {
 		if (x >= 0 && y >= 0 && x < SIZE && y < SIZE) {
 			grid[x][y] = value;
 			return true;
@@ -56,14 +57,14 @@ struct Grid {
 		return false;
 	}
 
-	int getValueAt(int x, int y) {
+	inline int getValueAt(int x, int y) {
 		if (x >= 0 && y >= 0 && x < SIZE && y < SIZE)
 			return grid[x][y];
 		else
 			return NOT_EXIST;
 	}
 
-	long long getScore(int status, int cnt, int edgeSituation) {
+	inline long long getScore(int status, int cnt, int edgeSituation) {
 		if (edgeSituation == 0)
 			return 0;
 		else if (edgeSituation == 1) {
@@ -88,7 +89,7 @@ struct Grid {
 		}
 	}
 
-	int calculateEdgeSituation(int leftEdgeStatus, int rightEdgeStatus) {
+	inline int calculateEdgeSituation(int leftEdgeStatus, int rightEdgeStatus) {
 		int cnt = 0;
 		if (EMPTY == leftEdgeStatus)
 			cnt++;
@@ -97,7 +98,7 @@ struct Grid {
 		return cnt;
 	}
 
-	int getElemInArraySafe(int list[], int index, int size) {
+	inline int getElemInArraySafe(int list[], int index, int size) {
 		if (0 <= index && index < size)
 			return list[index];
 		else
@@ -260,7 +261,7 @@ struct Grid {
 
 	long long DFS2(int depth, Position* movePos, long long alpha, long long beta, long long evaluationValue) {
 		// 极大极小搜索, depth%2==0时为BOT,depth%2==1时为PLAYER
-		// alpha-beta 剪枝, cutValue
+		// alpha-beta 剪枝
 		if (depth == DEPTH)
 			return evaluationValue;
 		long long selectedScore = depth % 2 == 0 ? alpha : beta;
@@ -281,6 +282,12 @@ struct Grid {
 				if (flag)
 					pq.emplace(PositionNode(i, j, EvaluateUnitDiff(depth, i, j)));
 			}
+		}
+		if (depth == 0) {
+			PositionNode curPositionNode = pq.top();
+			int i = curPositionNode.x, j = curPositionNode.y;
+			movePos->x = i;
+			movePos->y = j;
 		}
 		while (!pq.empty()) {
 			PositionNode curPositionNode = pq.top();
@@ -318,19 +325,23 @@ struct Grid {
 				if (selectedScore <= alpha) // alpha剪枝
 					return alpha;
 			}
-			if (curPositionNode.priority >= 80000)
-				break;
 		}
 		return selectedScore;
 	}
-	Json::Value ChoosePosition(int cnter)
+	inline Json::Value ChoosePosition(int cnter)
 	{
 		Position move;
 		Json::Value action;
 		if (cnter != 0) {
-			DFS2(0, &move, INT64_MIN , INT64_MAX , Evaluate());
-			action["x"] = move.x;
-			action["y"] = move.y;
+			long long evaluationValue = INT64_MIN;
+			for (DEPTH = 2; DEPTH <= 4; DEPTH += 2) {
+				long long tmpEvaluationValue = DFS2(0, &move, INT64_MIN, INT64_MAX, 0);
+				if (tmpEvaluationValue > evaluationValue) {
+					action["x"] = move.x;
+					action["y"] = move.y;
+					evaluationValue = tmpEvaluationValue;
+				}
+			}
 		}
 		else {
 			action["x"] = 7;
@@ -338,10 +349,13 @@ struct Grid {
 		}
 		return action;
 	}
+	Grid() {
+		memset(grid, EMPTY, sizeof(grid));
+	}
 };
 
 Grid grid;
-int main(){
+int main() {
 	string str;
 	getline(cin, str);
 	Json::Reader reader;
