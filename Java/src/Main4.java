@@ -37,11 +37,11 @@ class Main4 {
 
 	static class Grid {
 		public static final int SIZE = 15;
-		public static final int DEPTH = 5;
+		public static final int DEPTH = 4;
 		private int[][] grid = new int[SIZE][SIZE];
 		private int[] XShift = { -1, -1, -1, 0, 0, 1, 1, 1 };
 		private int[] YShift = { -1, 0, 1, -1, 1, -1, 0, 1 };
-		private long[] Score_E1 = { 0, 2, 40, 500, 5000, 70000, 750000, 8000000, 80000000 };
+		private long[] Score_E1 = { 0, 2, 40, 500, 8000, 95000, 800000, 8000000, 80000000 };
 		private long[] Score_E2 = { 0, 10, 100, 1000, 10000, 100000, 1000000, 10000000, 100000000 };
 		private int[] XList = new int[50];
 		private int[] YList = new int[50];
@@ -257,12 +257,12 @@ class Main4 {
 			return sum2 - sum1;
 		}
 
-		private long DFS2(int depth, Position movePos, long cutValue, long evaluationValue) {
+		private long DFS2(int depth, Position movePos, long alpha, long beta, long evaluationValue) {
 			// 极大极小搜索, depth%2==0时为BOT,depth%2==1时为PLAYER
 			// alpha-beta 剪枝, cutValue
 			if (depth == DEPTH)
 				return evaluationValue;
-			long selectedScore = depth % 2 == 0 ? Long.MIN_VALUE : Long.MAX_VALUE;
+			long selectedScore = depth % 2 == 0 ? alpha : beta;
 			Queue<PositionNode> pq = new PriorityQueue<PositionNode>(
 					depth % 2 == 0 ? PositionNode.cmpGreater : PositionNode.cmpLess);
 			for (int i = 0; i < SIZE; i++) {
@@ -285,8 +285,13 @@ class Main4 {
 				PositionNode curPositionNode = pq.poll();
 				int i = curPositionNode.x, j = curPositionNode.y;
 				placeAt(i, j, depth % 2 == 0 ? BOT : PLAYER);
-				long curScore = DFS2(depth + 1, null, selectedScore, evaluationValue + curPositionNode.priority);
-				if (depth % 2 == 0) {
+				long curScore;
+				if (depth % 2 == 0) { // 极大层节点
+					curScore = DFS2(depth + 1, null, selectedScore, beta, evaluationValue + curPositionNode.priority);
+				} else { // 极小层节点
+					curScore = DFS2(depth + 1, null, alpha, selectedScore, evaluationValue + curPositionNode.priority);
+				}
+				if (depth % 2 == 0) { // 极大层节点，取最大
 					if (selectedScore < curScore) {
 						selectedScore = curScore;
 						if (depth == 0) {
@@ -294,7 +299,7 @@ class Main4 {
 							movePos.y = j;
 						}
 					}
-				} else {
+				} else { // 极小层节点，取最小
 					if (selectedScore > curScore) {
 						selectedScore = curScore;
 					}
@@ -302,12 +307,14 @@ class Main4 {
 				placeAt(i, j, EMPTY);
 				// alpha-beta剪枝
 				if (depth % 2 == 0) {
-					if (selectedScore >= cutValue) // beta剪枝
-						break;
+					if (selectedScore >= beta) // beta剪枝
+						return beta;
 				} else {
-					if (selectedScore <= cutValue) // alpha剪枝
-						break;
+					if (selectedScore <= alpha) // alpha剪枝
+						return alpha;
 				}
+				if (curPositionNode.priority >= 80000)
+					break;
 			}
 			return selectedScore;
 		}
@@ -315,11 +322,11 @@ class Main4 {
 		public Map<String, Integer> ChoosePosition(int cnter) { // 选择位置
 			Position move = new Position();
 			Map<String, Integer> map = new HashMap<String, Integer>();
-			if(cnter!=0) {
-				DFS2(0, move, Long.MAX_VALUE, Evaluate());
+			if (cnter != 0) {
+				DFS2(0, move, Long.MIN_VALUE, Long.MAX_VALUE, Evaluate());
 				map.put("x", move.x);
 				map.put("y", move.y);
-			}else {
+			} else {
 				map.put("x", 7);
 				map.put("y", 7);
 			}
