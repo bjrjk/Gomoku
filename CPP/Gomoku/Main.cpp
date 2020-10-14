@@ -27,10 +27,10 @@ struct PositionNode {
 	int x, y;
 	long long priority;
 	PositionNode(int x, int y, long long priority) :x(x), y(y), priority(priority) {}
-	bool cmpGreater(const PositionNode& o1, const PositionNode& o2) const {
+	bool cmpLess(const PositionNode& o1, const PositionNode& o2) const {
 		return o2.priority < o1.priority;
 	}
-	bool cmpLess(const PositionNode& o1, const PositionNode& o2) const {
+	bool cmpGreater(const PositionNode& o1, const PositionNode& o2) const {
 		return o1.priority < o2.priority;
 	}
 	bool operator <(const PositionNode& o2) const {
@@ -354,7 +354,8 @@ int main(){
 			cnter++;
 		grid.placeAt(input["responses"][i]["x"].asInt(), input["responses"][i]["y"].asInt(), BOT);
 	}
-	grid.placeAt(input["requests"][turnID]["x"].asInt(), input["requests"][turnID]["y"].asInt(), PLAYER);
+	if (grid.placeAt(input["requests"][turnID]["x"].asInt(), input["requests"][turnID]["y"].asInt(), PLAYER))
+		cnter++;
 	Json::Value ret;
 	ret["response"] = grid.ChoosePosition(cnter);
 	Json::FastWriter writer;
