@@ -44,8 +44,8 @@ struct Grid {
 	int grid[SIZE][SIZE];
 	int XShift[SHIFT_LENGTH] = { -1, -1, -1, 0, 0, 1, 1, 1 };
 	int YShift[SHIFT_LENGTH] = { -1, 0, 1, -1, 1, -1, 0, 1 };
-	long long Score_E1[SCORE_LENGTH] = { 0, 1, 5, 25, 1250, 100000 };
-	long long Score_E2[SCORE_LENGTH] = { 0, 5, 20, 200, 1500, 100000 };
+	long long Score_E1[SCORE_LENGTH] = { 0, 1, 5, 25, 1250, 1000000 };
+	long long Score_E2[SCORE_LENGTH] = { 0, 5, 20, 200, 1500, 1000000 };
 	int XList[50];
 	int YList[50];
 
