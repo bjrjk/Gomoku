@@ -65,8 +65,16 @@ struct Grid {
 	}
 
 	inline long long getScore(int status, int cnt, int edgeSituation) {
-		if (edgeSituation == 0)
-			return 0;
+		if (edgeSituation == 0) {
+			switch (status) {
+			case BOT:
+				return cnt == 5 ? Score_E2[5] : 0;
+			case PLAYER:
+				return -(cnt == 5 ? Score_E2[5] : 0);
+			default:
+				return 0;
+			}
+		}
 		else if (edgeSituation == 1) {
 			switch (status) {
 			case BOT:
@@ -241,7 +249,7 @@ struct Grid {
 
 		// 评估右上-左下对角线
 		ptr = 0;
-		for (int i = x - min(x, SIZE - y), j = y + min(x, SIZE - y); i < SIZE && j >= 0; i++, j--) {
+		for (int i = x + min(SIZE - x, y), j = y - min(SIZE - x, y); i >= 0 && j < SIZE; i--, j++) {
 			XList[ptr] = i;
 			YList[ptr] = j;
 			ptr++;
